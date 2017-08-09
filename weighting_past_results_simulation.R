@@ -85,7 +85,7 @@ bias <- size * (1-w^d)/(1-w) / (size * (1-w^d)/(1-w) - 1)	#mathematical correcti
 var.rnd <- size * u*(1-u)*(1-w^(2*d))/(1-w^2)				#random binomial variance
 var.true <- bias * (sd.x^2 - var.rnd)						#total variance in weighted results that can be attributed to talent
 var.explained <- bias * (1 - var.rnd/sd.x^2)					#proportion of variance in weighted results that can be attributed to talent
-regr <- trials * (1-var.explained) / var.explained			#preliminary regression constant (applies to weighted average of talent over weighted results, not to current talent levels)
+regr <- trials * (1-var.explained) / var.explained			#preliminary regression constant (applies to estimating weighted average of talent over weighted results, not to current talent levels)
 regr.i <- u*(1-u)/sd^2 #original regression constant		#regression constant ignoring changes in talent
 
 # adjust regression constant to apply to current talent levels rather than weighted average over sample
@@ -113,7 +113,7 @@ regr <- trials * (1-var.explained) / var.explained		#revised regression constant
 
 #test regression constant
 #compare projections to actual talent
-#check average error for above and below average players to test for over- or under-regression
+#check average error for above- and below-average players to test for over- or under-regression
 #average error should be close to zero
 mean ( (successes[successes>(trials*u)] + u*regr)/(trials+regr) - p.full[successes>(trials*u),1] )	#average error for above average players in sim
 mean ( (successes[successes<(trials*u)] + u*regr)/(trials+regr) - p.full[successes<(trials*u),1] )	#average error for below average players in sim

@@ -182,8 +182,10 @@ sd <- .03
 cor <- .998
 sd.rnd <- sqrt(sd^2/cor^2 - sd^2)
 
+# list of variables needed for each simulation
 variables <- c(n,size,t,u,sd,cor,sd.rnd)
 
+# create function to run simulation so it can be called later for repeat simulations
 simulate.data <- function(variables) {
 	n <- variables[1]
 	size <- variables[2]
@@ -240,7 +242,7 @@ d <- t
 
 w <- optimize(reliability,interval=c(0,1),tol=.000001,maximum=T,v_t=v_t,v_x=v_x,r=r,d=d)$maximum
 
-#results as dependent variable
+# run a linear regression on results to estimate weighting
 lm <- lm(x.full[,t]~x.full[,1:(t-1)])
 coefficients <- rev(lm$coef[2:(t)])/lm$coef[t]
 
@@ -262,10 +264,13 @@ text(.8*d,y,col="dark red",cex=.8
 	)
 
 # compare to best-fit weight using mod on regression coefficients
-coefficients[coefficients<=0] <- .00000000001
-mod <- nls(y ~ exp(a * x), data=list(x=c(0:(t-2)),y=coefficients), start = list(a=0))
-base <- as.double(exp(coef(mod)))
-lines(base^(0:(t-1)),col='red',lwd=2)
+coefficients[coefficients<=0] <- .00000000001                                           #get rid of negative values since they will break our attempt to fit an exponential equation to the coefficients
+mod <- nls(y ~ exp(a * x), data=list(x=c(0:(t-2)),y=coefficients), start = list(a=0))   #best-fit exponential model
+base <- as.double(exp(coef(mod)))                                                       #best-fit decay factor
+lines(base^(0:(t-1)),col='red',lwd=2)                                                   #add best-fit exponential curve to graph
+
+# add 95% confidence interval from the exponential best-fit to give an indication of how coefficients fit the model
+# based only on the attempt to fit an exponential equation to the existing coefficients from the first regression, does not include uncertainty in the coefficients themselves and does not work as a confidence interval for the true weights (use repeat simulations instead to get a better idea of the uncertainty in estimating the true weights)
 CI.upper <- base + 1.96*summary(mod)$parameters[,2]
 CI.lower <- base - 1.96*summary(mod)$parameters[,2]
 polygon(c(0:(t-1),rev(0:(t-1))),c(CI.lower^(0:(t-1)),rev(CI.upper^(0:(t-1))))
@@ -273,6 +278,7 @@ polygon(c(0:(t-1),rev(0:(t-1))),c(CI.lower^(0:(t-1)),rev(CI.upper^(0:(t-1))))
 	,border=NA
 	)
 
+# add legend to graph
 y <- par("usr")[3] + .9*(par("usr")[4]-par("usr")[3])
 text(.8*d,y,col="red",cex=.8
 	,"|  best-fit to coefficients"
@@ -282,7 +288,7 @@ text(.8*d,y,col="red",cex=.8
 	
 #add ghost lines for additional simulations to show variability
 
-for(i in 1:5) {
+for(i in 1:5) {     #set number of additional sims to run
 	x.full.2 <- simulate.data(variables)$x.full
 	lm.2 <- lm(x.full.2[,t]~x.full.2[,1:(t-1)])
 	coefficients.2 <- rev(lm.2$coef[2:(t)])/lm.2$coef[t]	
@@ -301,6 +307,7 @@ polygon(c(0:(t-1),rev(0:(t-1))),c(CI.lower^(0:(t-1)),rev(CI.upper^(0:(t-1))))
 	)
 }
 
+# add repeat simulations to legend of graph
 y <- par("usr")[3] + .85*(par("usr")[4]-par("usr")[3])
 text(.8*d,y
 	,col=rgb(150,100,100,alpha=200,maxColorValue=255)
